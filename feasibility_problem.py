@@ -99,7 +99,7 @@ def functionFeasibilityProblem_cvx(H, gamma, Pmax, sigma2=1):
     try:
 
         problem.solve(
-            solver=cp.CLARABEL,
+            solver=cp.SCS,
             verbose=False
         )
 

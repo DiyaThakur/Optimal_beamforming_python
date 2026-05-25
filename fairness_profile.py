@@ -17,7 +17,7 @@ def functionFairnessProfile_cvx(H,
                                  Pmax,
                                  sigma2=1,
                                  tolerance=1e-3,
-                                 max_iter=50):
+                                 max_iter=10):
     """
     Fairness profile optimization using bisection
     """
@@ -25,7 +25,7 @@ def functionFairnessProfile_cvx(H,
     K = H.shape[1]
 
     lower = 0
-    upper = 100
+    upper = 5
 
     best_rate = 0
     best_W = None

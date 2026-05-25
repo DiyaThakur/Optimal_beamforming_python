@@ -15,7 +15,7 @@ def functionBRBalgorithm_cvx(H,
                              Pmax,
                              sigma2=1,
                              tolerance=1e-3,
-                             max_iter=100):
+                             max_iter=10):
     """
     Branch Reduce and Bound Algorithm
     """

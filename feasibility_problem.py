@@ -1,40 +1,21 @@
-
-
 import numpy as np
 import cvxpy as cp
 
 
-def functionFeasibilityProblem_cvx(H, gamma, Pmax, sigma2=1):
+def functionFeasibilityProblem_cvx(
+    H,
+    gamma,
+    Pmax,
+    sigma2=1
+):
     """
     SINR Feasibility Problem using CVXPY
-
-    Parameters
-    ----------
-    H : ndarray (N x K)
-        Channel matrix
-
-    gamma : ndarray
-        Target SINR values
-
-    Pmax : float
-        Maximum transmit power
-
-    sigma2 : float
-        Noise variance
-
-    Returns
-    -------
-    feasible : bool
-        True if feasible
-
-    W_opt : ndarray
-        Optimal beamforming matrix
     """
 
     # Dimensions
     N, K = H.shape
 
-    # Complex beamforming matrix
+    # Beamforming variable
     W = cp.Variable((N, K), complex=True)
 
     constraints = []
@@ -49,7 +30,7 @@ def functionFeasibilityProblem_cvx(H, gamma, Pmax, sigma2=1):
             hk.conj().T @ W[:, k]
         )
 
-        # Interference terms
+        # Interference vector
         interference_terms = []
 
         for i in range(K):
@@ -60,7 +41,7 @@ def functionFeasibilityProblem_cvx(H, gamma, Pmax, sigma2=1):
                     hk.conj().T @ W[:, i]
                 )
 
-        # Stack interference + noise
+        # Interference + noise
         if len(interference_terms) > 0:
 
             interference_vector = cp.hstack(
@@ -79,46 +60,51 @@ def functionFeasibilityProblem_cvx(H, gamma, Pmax, sigma2=1):
 
             rhs = np.sqrt(sigma2)
 
-        # SOC SINR constraint
+        # SINR SOC constraint
         constraints.append(
-            desired_signal >= np.sqrt(gamma[k]) * rhs
+            desired_signal >=
+            np.sqrt(gamma[k]) * rhs
         )
 
     # Total transmit power constraint
     constraints.append(
-        cp.sum(cp.abs(W) ** 2) <= Pmax
+        cp.sum_squares(cp.abs(W)) <= Pmax
     )
 
-    # Feasibility optimization
+    # Optimization problem
     problem = cp.Problem(
         cp.Minimize(0),
         constraints
     )
 
-    # Solve using CLARABEL
+    # Solve problem
     try:
 
         problem.solve(
             solver=cp.SCS,
-            verbose=False
+            verbose=False,
+            eps=1e-4,
+            max_iters=5000
         )
 
-    except:
+    except Exception as e:
 
-        # Fallback solver
-        problem.solve(
-            solver=cp.SCS,
-            verbose=False
-        )
+        print("Solver Error:", e)
 
-    # Check feasibility
-    feasible = problem.status in [
-        cp.OPTIMAL,
-        cp.OPTIMAL_INACCURATE
-    ]
+        return False, None
 
-    # Return solution
+    # Feasibility check
+    feasible = (
+        problem.status == cp.OPTIMAL
+        or
+        problem.status == cp.OPTIMAL_INACCURATE
+    )
+
+    # Return results
     if feasible:
+
         return feasible, W.value
+
     else:
-        return feasible, None
+
+        return False, None

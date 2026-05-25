@@ -25,7 +25,7 @@ Pmax = 10
 sigma2 = 1
 
 
-num_realizations = 100
+num_realizations = 5
 
 
 mrt_rates = []
